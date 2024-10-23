@@ -1,6 +1,5 @@
 #include "archive.h"
 
-// #pragma region assist
 // void log(uint8_t byte) {
 //     uint128_t mask = ((uint128_t)1) << 7;
 //     for (uint8_t i = 0; i < 7; i++) {
@@ -9,11 +8,10 @@
 //     }
 //     printf("\n");
 // }
-// #pragma endregion assist
 
 int archive_pack_file(huffman_table* table, char* src_file_name, char* dst_file_name) {
     uint8_t buffer = 0;              // to be written to file
-    uint8_t remaining_bits = 0;      // the bits remaning in the last written buffer.
+    uint8_t remaining_bits = 0;      // the bits remaining in the last written buffer.
     int16_t bits = 0;                // bits in the buffer
     int16_t total_bits_written = 0;  // bits written in the path
     int16_t delta = 0;               // diff
@@ -33,24 +31,24 @@ int archive_pack_file(huffman_table* table, char* src_file_name, char* dst_file_
 
     /*
         1)
-            ex1: negativ delta
+            ex1: negative delta
                 *
                 11110000 11111111 // path
                         *
                         11000000 // current buffer
-            ex2: positiv delta
+            ex2: positive delta
                                *
                 -------- --110000
                           *
                          11000000
 
-            calculate the diffrence between * and *
+            calculate the difference between * and *
         2)
-            if the delta was negativ(ex1),
-                the entire buffer will be filled, and the res will aways be zero
-            if the delta positiv (ex2)
+            if the delta was negative(ex1),
+                the entire buffer will be filled, and the res will always be zero
+            if the delta positive (ex2)
                 the buffer will filled with bits available
-                delta describes the number of bits remaning, 8-delta describes the bit un use
+                delta describes the number of bits remaining, 8-delta describes the bit un use
     */
     for (uint64_t i = 0; i < src_file.file_s.st_size; i++) {
         if (table->length[(uint8_t)src_file.file[i]] == 0) {
@@ -58,11 +56,11 @@ int archive_pack_file(huffman_table* table, char* src_file_name, char* dst_file_
         }
 
         do {
-            // calcualtes the diff between the head of the path, and last element of the buffer
+            // calculates the diff between the head of the path, and last element of the buffer
             delta = (8 - bits) - (table->length[(uint8_t)src_file.file[i]] - total_bits_written);
             if (0 < delta) {  // postiv delta
                 buffer = buffer | table->table[(uint8_t)src_file.file[i]] << (delta);
-            } else if (0 >= delta) {  /// negativ delta
+            } else if (0 >= delta) {  /// negative delta
                 buffer = buffer | table->table[(uint8_t)src_file.file[i]] >> (delta * -1);
             }
 
@@ -86,7 +84,7 @@ int archive_pack_file(huffman_table* table, char* src_file_name, char* dst_file_
         } while (delta < 0);
     }
 
-    // writes the remaning bits to the last pos of the file.
+    // writes the remaining bits to the last pos of the file.
     write(dst_file.file_d, &remaining_bits, 1);
 
     if (height >= src_file.file_s.st_size) {

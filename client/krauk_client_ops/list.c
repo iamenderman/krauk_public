@@ -7,7 +7,7 @@ int krauk_list_repos(KRAUK_FD kc, CLIENT_CTX *ctx) {
     uint8_t temp_name[MSG_SIZE] = {0};
     uint32_t temp_id;
     uint64_t temp_version;
-    // file manging
+    // file managing
     file_info rlist;
     struct stat st = {0};
 
@@ -22,8 +22,8 @@ int krauk_list_repos(KRAUK_FD kc, CLIENT_CTX *ctx) {
         return -1;
     }
     
-    // recives and opens file
-    if(krauk_recive_file(kc, ctx, C_LISTED_REPOS_FILE) == -1) {
+    // receives and opens file
+    if(krauk_receive_file(kc, ctx, C_LISTED_REPOS_FILE) == -1) {
         return -1;
     }
     rlist = open_file(C_LISTED_REPOS_FILE, O_RDONLY, MEM_DEFAULT);

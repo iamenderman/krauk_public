@@ -4,8 +4,8 @@
 #define DIRENT_FILE 8
 #define DIRENT_DIR 4
 
-// add all of the elemts of a file tree starting from the root realtive_path
-string_stack *file_tree(string_stack *stack, char *realativ_path);
+// add all of the elemets of a file tree starting from the root relative_path
+string_stack *file_tree(string_stack *stack, char *relative_path);
 
 int krauk_track(char *path) {
     // path storage
@@ -37,12 +37,12 @@ int krauk_track(char *path) {
     return 0;
 }
 
-string_stack *file_tree(string_stack *stack, char *realativ_path) {
+string_stack *file_tree(string_stack *stack, char *relative_path) {
     struct dirent *d_entry;
-    DIR *d_stream = opendir(realativ_path);
+    DIR *d_stream = opendir(relative_path);
 
     if (!d_stream) {
-        fprintf(stderr, "[-] could not open directory: %s\n", realativ_path);
+        fprintf(stderr, "[-] could not open directory: %s\n", relative_path);
         return stack;
     }
 
@@ -54,7 +54,7 @@ string_stack *file_tree(string_stack *stack, char *realativ_path) {
         }
 
         char new_dir[4096];
-        strcpy(new_dir, realativ_path);
+        strcpy(new_dir, relative_path);
         strcat(new_dir, "/");
         strcat(new_dir, d_entry->d_name);
 

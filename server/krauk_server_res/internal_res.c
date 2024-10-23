@@ -29,7 +29,7 @@ bool validate_id(PATH_BUILDER *pb, uint32_t repo_id) {
 
 bool validate_version(PATH_BUILDER *pb, uint32_t repo_id, uint32_t version_id) {
     file_info project_file;
-    uint32_t latset_version;
+    uint32_t latest_version;
 
     if (!validate_id(pb, repo_id)) {
         return false;
@@ -40,7 +40,7 @@ bool validate_version(PATH_BUILDER *pb, uint32_t repo_id, uint32_t version_id) {
     }
 
     project_file = open_file(PROJECT_PATH(pb), O_RDONLY, MEM_DEFAULT);
-    latset_version = decode_uint32_t(project_file.file);
+    latest_version = decode_uint32_t(project_file.file);
 
-    return version_id <= latset_version;
+    return version_id <= latest_version;
 }

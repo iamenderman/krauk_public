@@ -13,7 +13,7 @@
 
 
 typedef struct {
-    uint8_t id[USER_ID_LEN + 1]; // stringifed for ease of use
+    uint8_t id[USER_ID_LEN + 1]; // stringified for ease of use
     // per client secrets
     EVP_PKEY *MAC_public_key; // ** <- test
     EVP_PKEY *MAC_private_key; // ** <- test

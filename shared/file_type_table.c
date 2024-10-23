@@ -79,7 +79,7 @@ uint32_t *FIlE_TYPE_TABLE_get_table(FIlE_TYPE_TABLE t, char *file_end) {
 
 huffman_table *FIlE_TYPE_TABLE_get_huff(FIlE_TYPE_TABLE t, char *file_end) {
     for (size_t i = 0; i < t.list_count; i++) {
-        // if there exists an entery for the given file_end
+        // if there exists an entry for the given file_end
         if (strcmp(file_end, t.list[i].file_end) == 0) {
             return t.list[i].huff_table;
         }
@@ -102,7 +102,9 @@ FIlE_TYPE_TABLE FIlE_TYPE_TABLE_build_huffman(FIlE_TYPE_TABLE f) {
                 huffman_queue_add(queue, leaf);
             }
         }
-
+        if(queue->size == 0) {
+            printf("failed at: %s\n", f.list[i].file_end);
+        }
         // sorting the queue
         huffman_queue_sort(queue);
         // creating trie from the sorted queue
@@ -117,7 +119,7 @@ FIlE_TYPE_TABLE FIlE_TYPE_TABLE_build_huffman(FIlE_TYPE_TABLE f) {
     return f;
 }
 
-uint8_t *FIlE_TYPE_TABLE_seralize_table(FIlE_TYPE_TABLE t, uint32_t *length) {
+uint8_t *FIlE_TYPE_TABLE_serialize_table(FIlE_TYPE_TABLE t, uint32_t *length) {
     // calcs the maximum size for the seralize_table
     uint32_t capacity = 256 * (sizeof(uint32_t) + 2) * t.list_capacity + sizeof(uint32_t);
     for (size_t i = 0; i < t.list_count; i++) {
@@ -163,7 +165,7 @@ uint8_t *FIlE_TYPE_TABLE_seralize_table(FIlE_TYPE_TABLE t, uint32_t *length) {
     return buffer;
 }
 
-FIlE_TYPE_TABLE FIlE_TYPE_TABLE_deseralize_table(uint8_t *buffer) {
+FIlE_TYPE_TABLE FIlE_TYPE_TABLE_deserialize_table(uint8_t *buffer) {
     FIlE_TYPE_TABLE fl = FIlE_TYPE_TABLE_new();
     uint32_t temp_table[256] = {0};
     uint32_t offset = sizeof(uint32_t);
@@ -179,7 +181,7 @@ FIlE_TYPE_TABLE FIlE_TYPE_TABLE_deseralize_table(uint8_t *buffer) {
         // \0 skip
         offset += str_len + 1;
 
-        // number of occupied elemets in the freq_tablec
+        // number of occupied elemets in the freq_table
         uint8_t freq_table_size = buffer[offset++];
         for (size_t j = 0; j < freq_table_size; j++) {
             uint32_t ascii = buffer[offset++];
@@ -213,7 +215,7 @@ void FIlE_TYPE_TABLE_log(FIlE_TYPE_TABLE t) {
 */
 void append_table(uint32_t *dst, uint32_t *src) {
     for (size_t i = 0; i < 256; i++) {
-        if (dst[i] + src[i] >= dst[i]) {  // overflow protecion 
+        if (dst[i] + src[i] >= dst[i]) {  // overflow protection 
             dst[i] += src[i];
         }
     }

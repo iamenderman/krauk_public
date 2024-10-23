@@ -149,13 +149,11 @@ KRAUK_FD krauk_server_accept_client(KRAUK_FD kfd) {
     return client_fd;
 }
 
-KRAUK_FD krauk_server_create() {
-    char ip[18] = HOST;
-
+KRAUK_FD krauk_server_create(char *host, int port) {
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(PORT);
-    server_addr.sin_addr.s_addr = inet_addr(ip);
+    server_addr.sin_port = htons(port);
+    server_addr.sin_addr.s_addr = inet_addr(host);
 
     // creates socket
     int8_t server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -184,14 +182,12 @@ void krauk_server_close(KRAUK_FD server) {
 /*
     Client
 */
-KRAUK_FD krauk_client_connect() {
+KRAUK_FD krauk_client_connect(char *host, int port) {
     // sets and creates dst
-    char ip[18] = HOST;
-
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(PORT);
-    server_addr.sin_addr.s_addr = inet_addr(ip);
+    server_addr.sin_port = htons(port);
+    server_addr.sin_addr.s_addr = inet_addr(host);
 
     // creates socket
     int8_t client_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -262,7 +258,7 @@ int krauk_recv_header(KRAUK_FD kfd, CLIENT_CTX *c_ctx, SERVER_CTX *s_ctx) {
         return -1;
     }
 
-    // decrypts recived buffer
+    // decrypts received buffer
     if (rsa_2048_decrypt(header, RSA_MAXLEN, s_ctx->private_key, &plaintext) == -1) {
         if (plaintext != NULL) {
             free(plaintext);
@@ -381,14 +377,19 @@ int krauk_recv(KRAUK_FD kfd, CLIENT_CTX *ctx, uint8_t *buffer, int ws_flags, int
 
 /*
     File & multi-send buffer transfer
+    TODO: optimize send and recive
+            - larger buffer?
+            - smaller acks?
+            - fewer acks? 3rd?
 */
-int krauk_recive_file(KRAUK_FD kfd, CLIENT_CTX *ctx, char *file_name) {
+int krauk_receive_file(KRAUK_FD kfd, CLIENT_CTX *ctx, char *file_name) {
     uint8_t buffer[LARGE_NET_BUFFER] = {0};
     uint64_t file_size;
-    int64_t recived_bytes;
+    int64_t received_bytes;
     int32_t fd;
     int16_t write_size;
 
+    fprintf(stderr, "%s\n", file_name);
     fd = open(file_name, O_RDWR | O_CREAT, 0777);
 
     if (fd == -1) {
@@ -420,7 +421,7 @@ int krauk_recive_file(KRAUK_FD kfd, CLIENT_CTX *ctx, char *file_name) {
         First payload could be integrated into the recive loop -
         but would require redundent checks each new payload
     */
-    recived_bytes = 0;
+    received_bytes = 0;
     write_size = BUFFER_SIZE - sizeof(long);
 
     if (file_size <= BUFFER_SIZE - sizeof(long)) {  // if the file fit into the first paylaod
@@ -429,13 +430,13 @@ int krauk_recive_file(KRAUK_FD kfd, CLIENT_CTX *ctx, char *file_name) {
 
     // fill the first payload
     write(fd, buffer + sizeof(long), write_size);
-    recived_bytes += write_size;
+    received_bytes += write_size;
     write_size = BUFFER_SIZE;
 
-    while (recived_bytes != file_size) {
+    while (received_bytes != file_size) {
         // checks if the next write is the last write.
-        if (file_size - recived_bytes < BUFFER_SIZE) {  // checks if thge
-            write_size = file_size - recived_bytes;
+        if (file_size - received_bytes < BUFFER_SIZE) {  // checks if thge
+            write_size = file_size - received_bytes;
         }
 
         if (krauk_recv(kfd, ctx, buffer, WS_PAYLOAD, BUF_CLEAR) == -1) {
@@ -444,11 +445,23 @@ int krauk_recive_file(KRAUK_FD kfd, CLIENT_CTX *ctx, char *file_name) {
         }
 
         write(fd, buffer, write_size);
-        recived_bytes += write_size;
+        received_bytes += write_size;
+
+        // // sends ack
+        // BZERO(buffer, MSG_SIZE);
+        // encode_sequence(buffer, 2, POST_FILES, REQUEST_VALID);
+        // if (krauk_send(kfd, ctx, buffer, WS_MSG) == -1) {
+        //     puts("[-] Failed to send ack");
+        //     return -1;
+        // } else {
+        //     puts("SENT ACK");
+        // }
+
     }
 
+    // sends file received ack
     BZERO(buffer, MSG_SIZE);
-    encode_sequence(buffer, 2, POST_FILES, REQUEST_VALID);
+    encode_sequence(buffer, 2, POST_FILES, FILE_RECEIVED);
     krauk_send(kfd, ctx, buffer, WS_MSG);
 
     close(fd);
@@ -472,7 +485,7 @@ int krauk_send_file(KRAUK_FD kfd, CLIENT_CTX *ctx, file_info file) {
         */
         if (file.file_s.st_size - sent_bytes < next_expected_size) {
             next_expected_size = file.file_s.st_size - sent_bytes;
-        } 
+        }
 
         // copies the memory - offset if its the first payload
         if (sent_bytes == 0) {
@@ -481,9 +494,24 @@ int krauk_send_file(KRAUK_FD kfd, CLIENT_CTX *ctx, file_info file) {
             memcpy(buffer, file.file + sent_bytes, next_expected_size);
         }
 
+        /*
+            send payload 
+        */
         if (krauk_send(kfd, ctx, buffer, WS_PAYLOAD) == -1) {
             return -1;
         }
+
+
+        // /*
+        //     Wait for ack
+        // */
+        // if (krauk_recv(kfd, ctx, buffer, WS_MSG, BUF_CLEAR) == -1) {
+        //     return -1;
+        // }
+        // if (buffer[0] != POST_FILES || buffer[1] != REQUEST_VALID) {
+        //     puts("[-] Failed to send file, no ack received");
+        //     return -1;
+        // }
 
         // offset update
         sent_bytes += next_expected_size;
@@ -492,12 +520,12 @@ int krauk_send_file(KRAUK_FD kfd, CLIENT_CTX *ctx, file_info file) {
         BZERO(buffer, BUFFER_SIZE);
     }
 
-    // sends recived-file ack
+    // await file received ack
     if (krauk_recv(kfd, ctx, buffer, WS_MSG, BUF_CLEAR) == -1) {
         return -1;
     }
 
-    if (buffer[0] != POST_FILES || buffer[1] != REQUEST_VALID) {
+    if (buffer[0] != POST_FILES || buffer[1] != FILE_RECEIVED) {
         puts("[-] Failed to send file, reciver side error");
         return -1;
     }

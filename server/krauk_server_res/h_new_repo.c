@@ -19,7 +19,7 @@ int handle_create_repo(KRAUK_FD ksc, CLIENT_CTX *ctx, uint8_t *buffer) {
     strcpy(project_name, buffer + 1);
     BZERO(buffer, BUFFER_SIZE);
 
-    // sets up pathbuilder
+    // sets up path builder
     pb = PATH_BUILDER_new(ctx->id, 0, 0);
 
     // if the user haven't creates a repo before - create folder
@@ -43,7 +43,7 @@ int handle_create_repo(KRAUK_FD ksc, CLIENT_CTX *ctx, uint8_t *buffer) {
     // re-opens user info file
     info = open_file(INFO_PATH(pb), O_RDWR | O_APPEND, MEM_DIRECT);
 
-    // checks if name is already takem
+    // checks if name is already taken
     for (size_t i = sizeof(uint32_t); i < info.file_s.st_size;) {
         i += sizeof(uint32_t) + sizeof(uint64_t);
 
@@ -56,7 +56,7 @@ int handle_create_repo(KRAUK_FD ksc, CLIENT_CTX *ctx, uint8_t *buffer) {
         if (memcmp(info.file + i + 1, project_name, info.file[i]) == 0) {
             fprintf(stderr, "[-] Request denied, name [%s] taken \n", project_name);
 
-            // sets up pacakge
+            // sets up package
             encode_sequence(buffer, 2, CREATE_PROJECT, REQUEST_ERROR);
             encode_str(buffer + 2, "Project name taken");
 

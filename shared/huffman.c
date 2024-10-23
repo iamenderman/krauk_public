@@ -1,5 +1,6 @@
 #include "huffman.h"
 
+#include <assert.h>
 void print_binary(uint128_t byte, uint16_t len);
 void create_table(huffman_table* table, huffman_node* trie, uint128_t path, buffer len);
 int comp(const void* a, const void* b);
@@ -14,6 +15,13 @@ huffman_node* huffman_trie_create(huffman_queue* queue) {
 
     huffman_node* left = queue->nodes[queue->pos];
     huffman_node* right = queue->nodes[queue->pos + 1];
+
+    if (left == NULL || right == NULL) {
+        printf("length of queue: %u\n", queue->size);
+        printf("left read: : %u\n", queue->pos);
+        printf("right read: : %u\n", queue->pos + 1);
+    }
+
     huffman_node* parent = huffman_trie_create_parent(left, right);
 
     queue->nodes[queue->pos] = NULL;
@@ -26,6 +34,8 @@ huffman_node* huffman_trie_create(huffman_queue* queue) {
 huffman_node* huffman_trie_create_parent(huffman_node* left, huffman_node* right) {
     huffman_node* parent = calloc(1, sizeof(huffman_node));
 
+    assert(left != NULL);
+    assert(right != NULL);
     parent->weight = left->weight + right->weight;
     parent->left_trie = (struct huffman_node*)left;
     parent->right_trie = (struct huffman_node*)right;
@@ -118,7 +128,6 @@ void huffman_table_log(huffman_table* table) {
         }
     }
 }
-
 
 /*
     Assist functions

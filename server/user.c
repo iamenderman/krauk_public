@@ -29,7 +29,7 @@ USER_BASE *USER_BASE_deserialize(char *ub_file_path) {
 
         ub->users[i]->MAC_public_key = rsa_fread_key(ub->user_fp, RSA_PUBLIC);
         if (ub->users[i]->MAC_public_key == NULL) {
-            perror("[-] Failed to read user public key from userbase file");
+            perror("[-] Failed to read user public key from user base file");
             exit(EXIT_FAILURE);
         }
 
@@ -70,11 +70,11 @@ USER_INFO *USER_BASE_new_user(USER_BASE *ub) {
         user->id[USER_ID_LEN] = '\0';
     } while (user_id_taken(ub, user->id));
 
-    // genreates pkey pair
+    // generates pkey pair
     EVP_PKEY *pair = rsa_2480_rnd_keypair();
 
-    // hacky solotion to split the pair to the private and public part
-    // TODO: find better solotion :)
+    // hacky solution to split the pair to the private and public part
+    // TODO: find better solution :)
     if (rsa_write_key("publickey.temp", pair, RSA_PUBLIC) == 0) {
         perror("[-] Failed to write shared public key to tempfile");
         exit(EXIT_FAILURE);

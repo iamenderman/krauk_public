@@ -10,10 +10,15 @@
 #include <unistd.h>
 
 #include "cipher.h"
-#include "comms.h"
 #include "file_info.h"
 #include "ser.h"
 
+// TODO: move defines
+#define BZERO(b,len) (memset((b), '\0', (len)), (void) 0)
+#define KRAUK_EMPTY_FILE "EMPTY_FILE"
+#define USER_ID_LEN 32
+
+// buffer sizes
 #define LARGE_NET_BUFFER 4096
 #define SMALL_NET_BUFFER 512
 #define BUFFER_SIZE (LARGE_NET_BUFFER - RSA_MAXLEN)
@@ -21,13 +26,36 @@
 #define HEADER_SIZE (RSA_KEYLEN - RSA_PADDING_SIZE)
 #define ENTRY_SIZE 200
 
+// ws communication managing
+#define PORT 8080
+#define HOST "127.0.0.1"
+
+// requests
+#define LIST_VERSIONS 1
+#define LIST_REPOSITORIES 2
+#define PULL_REPOSITORY 3
+#define PULL_REPOSITORY_VERSION 4
+#define POST_FILES 5
+#define CREATE_PROJECT 6
+#define FILE_HASH_STREAM 7
+#define FILE_STREAM 8
+
+// responses
+#define REQUEST_ERROR 9
+#define REQUEST_VALID 10
+#define FILE_RECEIVED 11
+
+// file stream managing
+#define FREQ_FILE 12
+#define TRACKED_FILE 13
+#define PROJECT_FILE 14
+
+// ws managing
 #define WS_MSG 1
 #define WS_PAYLOAD 2
-#define BUF_CLEAR 1
-#define BUF_DEFAULT 2
+#define BUF_CLEAR 3
+#define BUF_DEFAULT 4
 
-// connection decides size of user_id :(
-#define USER_ID_LEN 32
 
 typedef int8_t KRAUK_FD;
 
@@ -37,7 +65,7 @@ typedef struct {
     uint8_t iv[AES_IV_LEN];
     // user identification
     uint8_t id[USER_ID_LEN + 1];  // stringified user_id
-    // server-client shared keypair - message authenticaiton
+    // server-client shared keypair - message authentication
     EVP_PKEY *MAC_public_key;
     EVP_PKEY *MAC_private_key;
 } CLIENT_CTX;
@@ -60,13 +88,13 @@ void CLIENT_CTX_free(CLIENT_CTX *ctx);
     Server
 */
 KRAUK_FD krauk_server_accept_client(KRAUK_FD kfd);
-KRAUK_FD krauk_server_create();
+KRAUK_FD krauk_server_create(char *host, int port);
 void krauk_server_close(KRAUK_FD kfd);
 
 /*
     Client
 */
-KRAUK_FD krauk_client_connect();
+KRAUK_FD krauk_client_connect(char *host, int port);
 void krauk_client_close(KRAUK_FD kfd);
 
 /*
@@ -84,7 +112,7 @@ int krauk_recv(KRAUK_FD kfd, CLIENT_CTX *ctx, uint8_t *buffer, int ws_flags, int
 /*
     File & multi-send buffer transfer
 */
-int krauk_recive_file(KRAUK_FD kfd, CLIENT_CTX *ctx, char *file_name);
+int krauk_receive_file(KRAUK_FD kfd, CLIENT_CTX *ctx, char *file_name);
 int krauk_send_file(KRAUK_FD kfd, CLIENT_CTX *ctx, file_info file);
 
 /*

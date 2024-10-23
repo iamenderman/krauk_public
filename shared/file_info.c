@@ -18,7 +18,7 @@ file_info fopen_file(int fd, int mem_flags) {
         file_i.file = (char *)mmap(NULL, file_i.file_s.st_size, PROT_READ, MAP_PRIVATE, file_i.file_d, 0);
     }
 
-    // creates a copy of the file, making it unafffected by trunc etc.
+    // creates a copy of the file, making it unaffected by trunc etc.
     if (mem_flags == MEM_COPY) {
         char *file_copy = (char *)calloc(file_i.file_s.st_size + 1, sizeof(char));
 

@@ -12,11 +12,11 @@ int krauk_request_file(KRAUK_FD kc, CLIENT_CTX *ctx) {
     if (krauk_send(kc, ctx, buffer, WS_MSG) == -1) {
         return -1;
     }
-    if (krauk_recive_file(kc, ctx, "testapa") == -1) {
+    if (krauk_receive_file(kc, ctx, "test!") == -1) {
         return -1;
     }
 
-    file_info temp_file = open_file("testapa", O_RDWR, MEM_DEFAULT);
+    file_info temp_file = open_file("test!", O_RDWR, MEM_DEFAULT);
     printf("%s\n", temp_file.file);
 
     return 0;

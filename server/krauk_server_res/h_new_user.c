@@ -8,8 +8,13 @@ int handle_new_user(SERVER_CTX *s_ctx, USER_BASE *ub) {
     // adds new user to user base
     user = USER_BASE_new_user(ub);
 
+#ifndef DEBUG 
     // creates user config file
     sprintf(u_path, "%s/%s", P_USERS, user->id);
+#else 
+    strcpy(u_path, "../client/newuser");
+#endif
+
     config_fp = fopen(u_path, "w+");
 
     if (config_fp == NULL) {

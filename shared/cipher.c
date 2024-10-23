@@ -190,8 +190,10 @@ int64_t rsa_2048_decrypt(uint8_t *ciphertext, uint64_t ciphertext_len, EVP_PKEY 
         return -1;
     }
 
-    if (EVP_PKEY_decrypt(ctx, out, &outlen, ciphertext, ciphertext_len) <= 0) {
-        puts("[-] Failed to decrypt given plaintext");
+    int test = EVP_PKEY_decrypt(ctx, out, &outlen, ciphertext, ciphertext_len); 
+    if (test <= 0) {
+        printf("[%d]: %s\n", test, ERR_reason_error_string(ERR_get_error()));
+        perror("[-] Failed to decrypt given plaintext");
         return -1;
     }
 
@@ -207,16 +209,16 @@ EVP_PKEY *rsa_2480_rnd_keypair() {
     EVP_PKEY_CTX *ctx;
     EVP_PKEY *pkey = NULL;
 
-    // createsc context based on keytype_id
+    // creates context based on keytype_id
     ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
 
     if (!ctx) {
-        perror("[-] Failed to create key generation evnioment: ");
+        perror("[-] Failed to create key generation enviornment: ");
         return NULL;
     }
-    // inints key algortihm
+    // inits key algorithm
     if (EVP_PKEY_keygen_init(ctx) <= 0) {
-        perror("[-] Failed to setup PKEY with given enviromemt: ");
+        perror("[-] Failed to setup PKEY with given environemnt: ");
         return NULL;
     }
 
@@ -227,7 +229,7 @@ EVP_PKEY *rsa_2480_rnd_keypair() {
     }
 
     if (EVP_PKEY_keygen(ctx, &pkey) <= 0) {
-        perror("[-] Failed to key genreation ");
+        perror("[-] Failed to key generation ");
         return NULL;
     }
 

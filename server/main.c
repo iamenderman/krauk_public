@@ -7,15 +7,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "../shared/enviroment.h"
 #include "../shared/file_type_table.h"
 #include "../shared/krauk_connection.h"
 #include "./krauk_server_res/krauk_server_res.h"
 #include "path_construct.h"
 #include "user.h"
-
-/*
-    Fixa hantering av idn som inte finn
-*/
 
 void test_aes() {
     // check_file_structre();
@@ -144,6 +141,11 @@ int main(int argc, char **argv) {
     SERVER_CTX *s_ctx;
     USER_BASE *ub;
     // net
+    ENV *env;
+    char host[17] = HOST;
+    int port = PORT;
+    char *env_host = NULL;
+    char *env_port = NULL;
     uint8_t buffer[LARGE_NET_BUFFER] = {0};
     KRAUK_FD server;
     KRAUK_FD client;
@@ -170,8 +172,26 @@ int main(int argc, char **argv) {
         goto free_s;  // agh
     }
 
+    // reads env file
+    env = ENV_read(NULL);
+    if (env != NULL) {
+        // get envs
+        env_host = ENV_get(env, "HOST");
+        env_port = ENV_get(env, "PORT");
+
+        if (env_host != NULL && strlen(env_host) < 16) {
+            strcpy(host, env_host);
+        }
+        if (env_port != NULL && atoi(env_port) != 0) {
+            port = atoi(env_port);
+        }
+
+        ENV_log(env);
+        ENV_free(env);
+    }
+
     // inits server
-    server = krauk_server_create();
+    server = krauk_server_create(host, port);
 
     while (1) {
         printf("[+] Waiting for client\n");
@@ -207,7 +227,7 @@ int main(int argc, char **argv) {
                 res = handle_pull_repo_version(client, c_ctx, buffer);
                 break;
             case FILE_HASH_STREAM:
-                res = handle_hased_file_stream(client, c_ctx, buffer);
+                res = handle_hashed_file_stream(client, c_ctx, buffer);
             case FILE_STREAM:
                 res = handle_file_stream(client, c_ctx, buffer);
             default:

@@ -20,7 +20,7 @@ int krauk_pull(KRAUK_FD kc, CLIENT_CTX *ctx, uint32_t repo_id) {
     }
 
     // gets the tracked file
-    if (krauk_recive_file(kc, ctx, C_TRACKED_FILE) == -1) {
+    if (krauk_receive_file(kc, ctx, C_TRACKED_FILE) == -1) {
         return -1;
     }
     temp_file = open_file(C_TRACKED_FILE, O_RDONLY, MEM_DEFAULT);
@@ -28,11 +28,11 @@ int krauk_pull(KRAUK_FD kc, CLIENT_CTX *ctx, uint32_t repo_id) {
     close_file(temp_file);
 
     // gets the freq table file
-    if (krauk_recive_file(kc, ctx, C_TABLE_FILE) == -1) {
+    if (krauk_receive_file(kc, ctx, C_TABLE_FILE) == -1) {
         return -1;
     }
     temp_file = open_file(C_TABLE_FILE, O_RDWR, MEM_DEFAULT);
-    ft_table = FIlE_TYPE_TABLE_deseralize_table(temp_file.file);
+    ft_table = FIlE_TYPE_TABLE_deserialize_table(temp_file.file);
     close_file(temp_file);
 
     for (uint32_t c = 0; c < tracked_rowifed.row_count; c += 2) {
@@ -50,11 +50,11 @@ int krauk_pull(KRAUK_FD kc, CLIENT_CTX *ctx, uint32_t repo_id) {
         sprintf(hashed_file_path, "%s%s", C_HASHED_FILES_DIR, tracked_rowifed.rows[c + 1]);
 
         // wait for the file
-        if (krauk_recive_file(kc, ctx, hashed_file_path) == -1) {
+        if (krauk_receive_file(kc, ctx, hashed_file_path) == -1) {
             return -1;
         }
         table = FIlE_TYPE_TABLE_get_table(ft_table, get_file_ending(tracked_rowifed.rows[c]));
-        // unpacks the newly recived file
+        // unpacks the newly received file
         archive_unpack_file(table, hashed_file_path, tracked_rowifed.rows[c]);
 
         BZERO(hashed_file_path, FILENAME_MAX + 1);

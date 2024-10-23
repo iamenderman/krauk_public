@@ -12,9 +12,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "comms.h"
 #include "huffman.h"
 #include "ser.h"
+
+#include "../shared/krauk_connection.h"
 
 typedef struct {
     char *file_end;
@@ -42,8 +43,8 @@ huffman_table *FIlE_TYPE_TABLE_get_huff(FIlE_TYPE_TABLE t, char *file_end);
 
 FIlE_TYPE_TABLE FIlE_TYPE_TABLE_build_huffman(FIlE_TYPE_TABLE f);
 
-uint8_t *FIlE_TYPE_TABLE_seralize_table(FIlE_TYPE_TABLE t, uint32_t *length);
+uint8_t *FIlE_TYPE_TABLE_serialize_table(FIlE_TYPE_TABLE t, uint32_t *length);
 
-FIlE_TYPE_TABLE FIlE_TYPE_TABLE_deseralize_table(uint8_t *buffer);
+FIlE_TYPE_TABLE FIlE_TYPE_TABLE_deserialize_table(uint8_t *buffer);
 
 void FIlE_TYPE_TABLE_log(FIlE_TYPE_TABLE t);

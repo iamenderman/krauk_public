@@ -34,7 +34,7 @@ typedef struct {
 
 // creates a huffman priority queue
 huffman_queue* huffman_queue_create();
-// destroyes huffman queue and all of its contents
+// destroys huffman queue and all of its contents
 void huffman_queue_destroy(huffman_queue* queue);
 // adds a 'node' to the queue
 void huffman_queue_add(huffman_queue* queue, huffman_node* node);
@@ -50,7 +50,7 @@ void huffman_trie_destroy(huffman_node* trie);
 
 // creates huffman table
 huffman_table* huffman_table_create(huffman_node* trie);
-// yeets table
+// frees table
 void huffman_table_destroy(huffman_table* table);
 
 // add debug flag

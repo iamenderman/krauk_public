@@ -9,6 +9,7 @@
 #define IS_PULL(len, arg) CMD_CHECK(len, 1, arg, "pull")
 #define IS_POST(len, arg) CMD_CHECK(len, 1, arg, "post")
 #define IS_REGISTER(len, arg) CMD_CHECK(len, 2, arg, "reg")
+#define IS_ENV(len, arg) CMD_CHECK(len, 1, arg, "env")
 
 LAUNCH_SETTINGS parse_config(LAUNCH_SETTINGS ls);
 LAUNCH_SETTINGS parse_command(LAUNCH_SETTINGS ls, int argc, char **argv);
@@ -31,7 +32,7 @@ LAUNCH_SETTINGS LAUNCH_SETTINGS_construct(int argc, char **argv) {
 };
 
 LAUNCH_SETTINGS parse_config(LAUNCH_SETTINGS ls) {
-    uint16_t setting_offset;
+    uint16_t setting_offset = 0;
     uint8_t *shared;
     uint8_t *home;
 
@@ -42,13 +43,14 @@ LAUNCH_SETTINGS parse_config(LAUNCH_SETTINGS ls) {
             home = getpwuid(getuid())->pw_dir;
         }
 
-        // printnts default to path
+        // prints default to path
         sprintf(ls.config_dir, "%s/.local/share", home);
         setting_offset = strlen(ls.config_dir);
     }
 
     sprintf(ls.config_dir + setting_offset, "/.krauk");
     sprintf(ls.config_file, "%s/self", ls.config_dir);
+    sprintf(ls.env_file, "%s/.env", ls.config_dir);
 
     return ls;
 }
@@ -76,7 +78,10 @@ LAUNCH_SETTINGS parse_command(LAUNCH_SETTINGS ls, int argc, char **argv) {
     } else if (IS_POST(ls.argc, ls.arg[0])) {
         ls.cmd = CMD_POST;
         ls.arg++;
-    }
+    } else if (IS_ENV(ls.argc, ls.arg[0])) {
+        ls.cmd = CMD_ENV;
+        ls.arg++;
+    } 
 
     return ls;
 }

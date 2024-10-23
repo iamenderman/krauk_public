@@ -16,6 +16,7 @@
 
 #include "../shared/archive.h"
 #include "../shared/cipher.h"
+#include "../shared/enviroment.h"
 #include "../shared/file_info.h"
 #include "../shared/file_type_table.h"
 #include "../shared/krauk_connection.h"
@@ -82,10 +83,14 @@ int main(int argc, char **argv) {
         case CMD_REGISTER:
             register_user_context(ls, ls.arg[0]);
             break;
+        case CMD_ENV:
+            printf("env: %s\n", ls.env_file);
+            break;
     }
 
-    return 0;
+    return res == 0 ? 0 : 1;
 }
+
 uint32_t validate_krauk_system() {
     file_info info;
     int repo_id;
@@ -104,6 +109,7 @@ uint32_t validate_krauk_system() {
 
     return repo_id;
 }
+
 void validate_self(LAUNCH_SETTINGS ls) {
     struct stat st = {0};
 
@@ -115,7 +121,31 @@ void validate_self(LAUNCH_SETTINGS ls) {
 }
 
 void init_connection(LAUNCH_SETTINGS ls, KRAUK_FD *server, SERVER_CTX **s_ctx, CLIENT_CTX **c_ctx) {
-    *server = krauk_client_connect();
+    ENV *env;
+    // default host
+    char host[17] = HOST;
+    int port = PORT;
+    // env values
+    char *env_host = NULL;
+    char *env_port = NULL;
+
+    // reads env file
+    env = ENV_read(ls.env_file);
+    if (env != NULL) {
+        // get envs
+        env_host = ENV_get(env, "HOST");
+        env_port = ENV_get(env, "PORT");
+
+        if (env_host != NULL && strlen(env_host) < 16) {
+            strcpy(host, env_host);
+        }
+        if (env_port != NULL && atoi(env_port) != 0) {
+            port = atoi(env_port);
+        }
+        ENV_free(env);
+    }
+
+    *server = krauk_client_connect(host, port);
     init_SERVER_CLIENT_CTX(ls.config_file, s_ctx, c_ctx);
     krauk_send_header(*server, *c_ctx, *s_ctx);
 }
@@ -128,13 +158,12 @@ void destroy_connection(KRAUK_FD server, SERVER_CTX *s_ctx, CLIENT_CTX *c_ctx) {
 
 void setup_file_structure() {
     struct stat st = {0};
-    int8_t fd;
 
     // creates krauk home dir in the given folder
     if (stat(C_HOME_DIR, &st) == -1) {
         mkdir(C_HOME_DIR, 0700);
     }
-    // creates a dir for comprssed files inside of the home dir
+    // creates a dir for compressed files inside of the home dir
     if (stat(C_HASHED_FILES_DIR, &st) == -1) {
         mkdir(C_HASHED_FILES_DIR, 0700);
     }
@@ -142,19 +171,19 @@ void setup_file_structure() {
 
 void register_user_context(LAUNCH_SETTINGS ls, uint8_t *file_path) {
     struct stat st = {0};
-    file_info to_be_registerd;
+    file_info to_be_registered;
     int config_fd;
 
     if (stat(ls.config_dir, &st) == -1) {
         mkdir(ls.config_dir, 0777);
     }
 
-    to_be_registerd = open_file(file_path, O_RDONLY, MEM_DEFAULT);
+    to_be_registered = open_file(file_path, O_RDONLY, MEM_DEFAULT);
     config_fd = open(ls.config_file, O_RDWR | O_CREAT, 0777);
 
-    write(config_fd, to_be_registerd.file, to_be_registerd.file_s.st_size);
-    close_file(to_be_registerd);
+    write(config_fd, to_be_registered.file, to_be_registered.file_s.st_size);
+    close_file(to_be_registered);
     close(config_fd);
 
-    printf("[+] Successfully registerd userfile [%s]\n", ls.config_file);
+    printf("[+] Successfully registered user file [%s]\n", ls.config_file);
 }

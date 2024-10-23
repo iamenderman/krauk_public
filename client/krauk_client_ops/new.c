@@ -8,7 +8,7 @@ int32_t krauk_new_repo(KRAUK_FD kc, CLIENT_CTX *ctx, char *project_name) {
 
     // project name check
     if (strlen(project_name) > ENTRY_SIZE - sizeof(uint32_t) - 1) {
-        fprintf(stderr, "[-] Project names are limted to %d chars\n", MAX_INPUT_SIZE);
+        fprintf(stderr, "[-] Project names are limted to %d chars\n", ENTRY_SIZE - sizeof(uint32_t) - 1);
         return -1;
     }
 
@@ -40,7 +40,7 @@ int32_t krauk_new_repo(KRAUK_FD kc, CLIENT_CTX *ctx, char *project_name) {
         return -1;
     }
 
-    // writes recived id & project to repo file
+    // writes received id & project to repo file
     repo_id = decode_uint32_t(buffer + 2);
     encode_uint32_t(entry, repo_id);
     encode_str(entry + sizeof(uint32_t), project_name);

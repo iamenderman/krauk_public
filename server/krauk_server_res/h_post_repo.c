@@ -22,9 +22,9 @@ int handle_post_repo(KRAUK_FD ksc, CLIENT_CTX *ctx, uint8_t *buffer) {  // gets 
         encode_sequence(buffer, 2, POST_FILES, REQUEST_ERROR);
         encode_str(buffer + 2, "Invalid repository repo_id.");
 
-        // no error check needed - redundent
+        // no error check needed - redundant
         krauk_send(ksc, ctx, buffer, WS_MSG);
-        puts("[-] Recived invalid repo_id.");
+        puts("[-] Received invalid repo_id.");
         PATH_BUILDER_free(pb);
 
         return -1;
@@ -49,7 +49,7 @@ int handle_post_repo(KRAUK_FD ksc, CLIENT_CTX *ctx, uint8_t *buffer) {  // gets 
     }
 
     // gets track file
-    if (krauk_recive_file(ksc, ctx, TRACKED_PATH(pb)) == -1) {
+    if (krauk_receive_file(ksc, ctx, TRACKED_PATH(pb)) == -1) {
         PATH_BUILDER_free(pb);
         return -1;
     }
@@ -58,22 +58,20 @@ int handle_post_repo(KRAUK_FD ksc, CLIENT_CTX *ctx, uint8_t *buffer) {  // gets 
     track_file_rowifed = row_file_create(tracked_files, ROW_DEFAULT);
     printf("[+] Recived file: %s\n", TRACKED_PATH(pb));
 
-    // fetches the freqtable
-    if (krauk_recive_file(ksc, ctx, TABLE_PATH(pb)) == -1) {
+    // fetches the freq table
+    if (krauk_receive_file(ksc, ctx, TABLE_PATH(pb)) == -1) {
         PATH_BUILDER_free(pb);
         return -1;
     }
-    printf("[+] Recived file: %s\n", TABLE_PATH(pb));
+    printf("[+] Received file: %s\n", TABLE_PATH(pb));
 
     for (size_t c = 0; c < track_file_rowifed.row_count; c += 2) {
         if (strcmp(track_file_rowifed.rows[c + 1], KRAUK_EMPTY_FILE) == 0) {
             continue;
         }
 
-        puts(track_file_rowifed.rows[c + 1]);
-
         hashed = PATH_BUILDER_dynamic_dir(pb, HASHED, track_file_rowifed.rows[c + 1]);
-        if (krauk_recive_file(ksc, ctx, hashed) == -1) {
+        if (krauk_receive_file(ksc, ctx, hashed) == -1) {
             PATH_BUILDER_free(pb);
             return -1;
         }
@@ -81,7 +79,7 @@ int handle_post_repo(KRAUK_FD ksc, CLIENT_CTX *ctx, uint8_t *buffer) {  // gets 
         printf("[+] Recived file: %s\n", hashed);
     }
 
-    puts("[+] Sucsessfully recived update");
+    puts("[+] Successfully received update");
     PATH_BUILDER_free(pb);
 
     return 0;
